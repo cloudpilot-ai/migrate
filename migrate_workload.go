@@ -44,7 +44,7 @@ func patchDeploymentMigrate(workload *Workload) error {
 	newDeployment.Spec.Template.Spec.NodeSelector[MigrateNodeSelectorKey] = MigrateNodeSelectorValue
 	tolerationExists := CheckWorkloadHasMigrateToleration(deployment.Spec.Template.Spec.Tolerations)
 	if !tolerationExists {
-		newDeployment.Spec.Template.Spec.Tolerations = append(newDeployment.Spec.Template.Spec.Tolerations, MigrateToleration)
+		newDeployment.Spec.Template.Spec.Tolerations = AddMigrateToleration(deployment.Spec.Template.Spec.Tolerations)
 	}
 
 	originalBytes, err := json.Marshal(deployment)
@@ -88,7 +88,7 @@ func patchStatefulSetMigrate(workload *Workload) error {
 	newSts.Spec.Template.Spec.NodeSelector[MigrateNodeSelectorKey] = MigrateNodeSelectorValue
 	tolerationExists := CheckWorkloadHasMigrateToleration(sts.Spec.Template.Spec.Tolerations)
 	if !tolerationExists {
-		newSts.Spec.Template.Spec.Tolerations = append(newSts.Spec.Template.Spec.Tolerations, MigrateToleration)
+		newSts.Spec.Template.Spec.Tolerations = AddMigrateToleration(sts.Spec.Template.Spec.Tolerations)
 	}
 
 	originalBytes, err := json.Marshal(sts)

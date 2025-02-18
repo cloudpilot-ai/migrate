@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"reflect"
-	"slices"
 
 	"github.com/cenkalti/backoff/v4"
 	appsv1 "k8s.io/api/apps/v1"
@@ -44,16 +42,7 @@ func rollbackDeploymentMigrate(workload *Workload) error {
 	}
 	tolerationExists := CheckWorkloadHasMigrateToleration(deployment.Spec.Template.Spec.Tolerations)
 	if tolerationExists {
-		targetIndex := -1
-		for i, toleration := range deployment.Spec.Template.Spec.Tolerations {
-			if reflect.DeepEqual(toleration, MigrateToleration) {
-				targetIndex = i
-				break
-			}
-		}
-
-		newDeployment.Spec.Template.Spec.Tolerations = slices.Delete(newDeployment.Spec.Template.Spec.Tolerations,
-			targetIndex, targetIndex+1)
+		newDeployment.Spec.Template.Spec.Tolerations = RemoveMigrateToleration(deployment.Spec.Template.Spec.Tolerations)
 	}
 
 	originalBytes, err := json.Marshal(deployment)
@@ -96,16 +85,7 @@ func rollbackStatefulSetMigrate(workload *Workload) error {
 	}
 	tolerationExists := CheckWorkloadHasMigrateToleration(sts.Spec.Template.Spec.Tolerations)
 	if tolerationExists {
-		targetIndex := -1
-		for i, toleration := range sts.Spec.Template.Spec.Tolerations {
-			if reflect.DeepEqual(toleration, MigrateToleration) {
-				targetIndex = i
-				break
-			}
-		}
-
-		newSts.Spec.Template.Spec.Tolerations = slices.Delete(newSts.Spec.Template.Spec.Tolerations,
-			targetIndex, targetIndex+1)
+		newSts.Spec.Template.Spec.Tolerations = RemoveMigrateToleration(sts.Spec.Template.Spec.Tolerations)
 	}
 
 	originalBytes, err := json.Marshal(sts)
