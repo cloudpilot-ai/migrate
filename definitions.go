@@ -13,6 +13,7 @@ type Workload struct {
 	Available      int32
 	Ready          bool
 	MigratePatched bool
+	Priority       int32
 	deployment     *appsv1.Deployment
 	statefulSet    *appsv1.StatefulSet
 }
