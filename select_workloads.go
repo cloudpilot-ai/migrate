@@ -12,14 +12,34 @@ import (
 )
 
 func selectWorkloads(scanner *bufio.Scanner) ([]Workload, error) {
-	fmt.Println("Input the workload id which should be selected, Example: 0,1,2,3")
+	fmt.Println("Input the workload id which should be selected, example: 0,1,2,3; or a range, example 1-9")
 	fmt.Print("Input: ")
 
 	if !scanner.Scan() {
 		return nil, fmt.Errorf("input nothing")
 	}
 	input := scanner.Text()
-	workloadsIDs := strings.Split(input, ",")
+
+	var workloadsIDs []string
+	if strings.Contains(input, ",") {
+		workloadsIDs = strings.Split(input, ",")
+	}
+	if strings.Contains(input, "-") {
+		ids := strings.Split(input, "-")
+		startIDStr, endIDStr := ids[0], ids[1]
+
+		startID, err := strconv.Atoi(startIDStr)
+		if err != nil {
+			return nil, err
+		}
+		endID, err := strconv.Atoi(endIDStr)
+		if err != nil {
+			return nil, err
+		}
+		for i := startID; i <= endID; i++ {
+			workloadsIDs = append(workloadsIDs, strconv.Itoa(i))
+		}
+	}
 
 	selectedWorkloads := make([]Workload, len(workloadsIDs))
 	for i, id := range workloadsIDs {
