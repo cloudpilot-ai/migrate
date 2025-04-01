@@ -21,9 +21,6 @@ func selectWorkloads(scanner *bufio.Scanner) ([]Workload, error) {
 	input := scanner.Text()
 
 	var workloadsIDs []string
-	if strings.Contains(input, ",") {
-		workloadsIDs = strings.Split(input, ",")
-	}
 	if strings.Contains(input, "-") {
 		ids := strings.Split(input, "-")
 		startIDStr, endIDStr := ids[0], ids[1]
@@ -39,6 +36,8 @@ func selectWorkloads(scanner *bufio.Scanner) ([]Workload, error) {
 		for i := startID; i <= endID; i++ {
 			workloadsIDs = append(workloadsIDs, strconv.Itoa(i))
 		}
+	} else {
+		workloadsIDs = strings.Split(input, ",")
 	}
 
 	selectedWorkloads := make([]Workload, len(workloadsIDs))
