@@ -5,6 +5,10 @@ on:
     tags:
       - 'v*'
 
+# Add permission for upstream repo.
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build and Release
