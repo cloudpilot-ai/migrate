@@ -1,0 +1,40 @@
+name: Build Go Binaries
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: Build binaries for multiple platforms
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        goos: [linux, windows, darwin]
+        goarch: [amd64, arm64]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.23'
+
+    - name: Build binary
+      env:
+        GOOS: ${{ matrix.goos }}
+        GOARCH: ${{ matrix.goarch }}
+      run: |
+        mkdir -p dist/${GOOS}_${GOARCH}
+        go build -o dist/${GOOS}_${GOARCH}/migrate
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: migrate-${{ matrix.goos }}-${{ matrix.goarch }}
+        path: dist/
