@@ -53,14 +53,15 @@ func selectWorkloads(scanner *bufio.Scanner) ([]Workload, error) {
 	}
 
 	printSelectedWorkloadsTable(selectedWorkloads)
-	fmt.Print("Enter 'confirm' to confirm the workloads: ")
+	fmt.Print("Press 'Enter' to confirm the workloads, or input others to skip: ")
 
 	if !scanner.Scan() {
 		return nil, fmt.Errorf("input nothing")
 	}
 	confirmInput := scanner.Text()
 
-	if confirmInput != "confirm" {
+	if confirmInput != "" {
+		fmt.Println("You have skipped the workloads.")
 		return nil, fmt.Errorf("confirm failed")
 	}
 
