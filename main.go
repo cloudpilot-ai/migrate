@@ -30,7 +30,9 @@ func main() {
 		fmt.Println("1. Show all workloads")
 		fmt.Println("2. Migrate workload")
 		fmt.Println("3. Rollback workload")
-		fmt.Println("4. Exit")
+		fmt.Println("4. Patch workload ARM affinity")
+		fmt.Println("5. Rollback workload ARM affinity")
+		fmt.Println("6. Exit")
 		fmt.Print("Input the action number: ")
 
 		if !scanner.Scan() {
@@ -58,6 +60,18 @@ func main() {
 			}
 			rollbackWorkload(selectedWorkloads)
 		case "4":
+			selectedWorkloads, err := selectWorkloads(scanner)
+			if err != nil {
+				log.Printf("Failed to select workloads, err: %v\n", err)
+			}
+			patchWorkloadARMAffinity(selectedWorkloads)
+		case "5":
+			selectedWorkloads, err := selectWorkloads(scanner)
+			if err != nil {
+				log.Printf("Failed to select workloads, err: %v\n", err)
+			}
+			rollbackWorkloadARMAffinity(selectedWorkloads)
+		case "6":
 			return
 		}
 	}

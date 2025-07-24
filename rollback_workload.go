@@ -2,14 +2,9 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
-	"github.com/cenkalti/backoff/v4"
-	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/strategicpatch"
 )
 
 func rollbackWorkload(selectedWorkloads []Workload) {
@@ -22,7 +17,7 @@ func rollbackWorkload(selectedWorkloads []Workload) {
 			err = rollbackStatefulSetMigrate(&workload)
 		}
 		if err != nil {
-			fmt.Printf("failed to rollback %s workload %s/%s: %v\n", workload.Kind,
+			fmt.Printf("failed to rollback %s workload %s/%s, err: %v\n", workload.Kind,
 				workload.Namespace, workload.Name, err)
 		}
 	}
@@ -45,30 +40,7 @@ func rollbackDeploymentMigrate(workload *Workload) error {
 		newDeployment.Spec.Template.Spec.Tolerations = RemoveMigrateToleration(deployment.Spec.Template.Spec.Tolerations)
 	}
 
-	originalBytes, err := json.Marshal(deployment)
-	if err != nil {
-		return err
-	}
-	updatedBytes, err := json.Marshal(newDeployment)
-	if err != nil {
-		return err
-	}
-	patchBytes, err := strategicpatch.CreateTwoWayMergePatch(originalBytes, updatedBytes, appsv1.Deployment{})
-	if err != nil {
-		return err
-	}
-
-	err = backoff.Retry(func() error {
-		_, patchErr := kubeClient.AppsV1().Deployments(workload.Namespace).
-			Patch(ctx, workload.Name, types.StrategicMergePatchType, patchBytes, metav1.PatchOptions{})
-		return patchErr
-	}, DefaultBackoff(ctx))
-	if err != nil {
-		return fmt.Errorf("failed to patch Deployment: %v", err)
-	}
-
-	fmt.Printf("Patch deployment %s/%s successfully\n", workload.Namespace, workload.Name)
-	return nil
+	return patchResource(ctx, deployment, newDeployment, workload.Namespace, workload.Name, workload.Kind)
 }
 
 func rollbackStatefulSetMigrate(workload *Workload) error {
@@ -88,28 +60,5 @@ func rollbackStatefulSetMigrate(workload *Workload) error {
 		newSts.Spec.Template.Spec.Tolerations = RemoveMigrateToleration(sts.Spec.Template.Spec.Tolerations)
 	}
 
-	originalBytes, err := json.Marshal(sts)
-	if err != nil {
-		return err
-	}
-	updatedBytes, err := json.Marshal(newSts)
-	if err != nil {
-		return err
-	}
-	patchBytes, err := strategicpatch.CreateTwoWayMergePatch(originalBytes, updatedBytes, appsv1.StatefulSet{})
-	if err != nil {
-		return err
-	}
-
-	err = backoff.Retry(func() error {
-		_, patchErr := kubeClient.AppsV1().StatefulSets(workload.Namespace).
-			Patch(ctx, workload.Name, types.StrategicMergePatchType, patchBytes, metav1.PatchOptions{})
-		return patchErr
-	}, DefaultBackoff(ctx))
-	if err != nil {
-		return fmt.Errorf("failed to patch StatefulSet: %v", err)
-	}
-
-	fmt.Printf("Patch statefulset %s/%s successfully\n", workload.Namespace, workload.Name)
-	return nil
+	return patchResource(ctx, sts, newSts, workload.Namespace, workload.Name, workload.Kind)
 }

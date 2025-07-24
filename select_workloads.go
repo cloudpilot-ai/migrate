@@ -52,7 +52,7 @@ func selectWorkloads(scanner *bufio.Scanner) ([]Workload, error) {
 		selectedWorkloads[i] = workloads[idInt]
 	}
 
-	printSelectedWorkloadsTable(selectedWorkloads)
+	printSelectedWorkloadsTable(selectedWorkloads, "")
 	fmt.Print("Press 'Enter' to confirm the workloads, or input others to skip: ")
 
 	if !scanner.Scan() {
@@ -68,37 +68,63 @@ func selectWorkloads(scanner *bufio.Scanner) ([]Workload, error) {
 	return selectedWorkloads, nil
 }
 
-func printSelectedWorkloadsTable(selectedWorkloads []Workload) {
+func printSelectedWorkloadsTable(selectedWorkloads []Workload, namespace string) {
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
 	t.SetStyle(table.StyleLight)
 
-	t.AppendHeader(table.Row{"Namespace", "Kind", "Name", "Replicas", "Available", "Ready", "MigratePatched"})
+	armSupported := CheckAllWorkloadsArm(selectedWorkloads)
 
-	for _, w := range selectedWorkloads {
-		t.AppendRow(table.Row{
-			w.Namespace,
-			w.Kind,
-			w.Name,
-			w.Replicas,
-			w.Available,
-			func() interface{} {
-				if w.Ready {
-					return text.Colors{text.FgGreen}.Sprint("True")
-				}
-				return text.Colors{text.FgRed}.Sprint("False")
-			}(),
-			func() interface{} {
-				if w.MigratePatched {
-					return text.Colors{text.FgGreen}.Sprint("True")
-				}
-				return text.Colors{text.FgRed}.Sprint("False")
-			}(),
-		})
+	t.AppendHeader(table.Row{"ID", "Namespace", "Kind", "Name", "Replicas", "Available", "Ready",
+		"MigratePatched", "ARMSupported", "ARMPatched", "Priority"})
+
+	for id, w := range selectedWorkloads {
+		if namespace == "" || namespace == w.Namespace {
+			t.AppendRow(table.Row{
+				id,
+				w.Namespace,
+				w.Kind,
+				w.Name,
+				w.Replicas,
+				w.Available,
+				func() interface{} {
+					if w.Ready {
+						return text.Colors{text.FgGreen}.Sprint("True")
+					}
+					return text.Colors{text.FgRed}.Sprint("False")
+				}(),
+				func() interface{} {
+					if w.MigratePatched {
+						return text.Colors{text.FgGreen}.Sprint("True")
+					}
+					return text.Colors{text.FgRed}.Sprint("False")
+				}(),
+				func() interface{} {
+					if armSupported[id].Err != nil {
+						fmt.Printf("Failed to check arm support for workload %s %s/%s: %v",
+							w.Kind, w.Namespace, w.Name, armSupported[id].Err)
+						return text.Colors{text.FgRed}.Sprint("Unknown")
+					}
+					if armSupported[id].Supported {
+						return text.Colors{text.FgGreen}.Sprint("True")
+					}
+					return text.Colors{text.FgRed}.Sprint("False")
+				}(),
+				func() interface{} {
+					if w.ARMPatched {
+						return text.Colors{text.FgGreen}.Sprint("True")
+					}
+					return text.Colors{text.FgRed}.Sprint("False")
+				}(),
+				w.Priority,
+			})
+		}
 	}
 
 	t.SetColumnConfigs([]table.ColumnConfig{
 		{Number: 1, AutoMerge: true, Colors: text.Colors{text.FgCyan}},
+		{Number: 2, AutoMerge: true, Colors: text.Colors{text.FgCyan}},
+		{Number: 3, AutoMerge: true, Colors: text.Colors{text.FgCyan}},
 	})
 	t.Style().Options.SeparateRows = true
 
