@@ -28,12 +28,12 @@ const (
 )
 
 var MigrateToleration = []corev1.Toleration{
-	{
-		Key:      "cloudpilot.ai/provider-disable",
-		Operator: corev1.TolerationOpEqual,
-		Value:    "true",
-		Effect:   corev1.TaintEffectNoSchedule,
-	},
+	//{
+	//	Key:      "cloudpilot.ai/provider-disable",
+	//	Operator: corev1.TolerationOpEqual,
+	//	Value:    "true",
+	//	Effect:   corev1.TaintEffectNoSchedule,
+	//},
 	{
 		Key:      "cloudpilot.ai/gradual-rebalance-only",
 		Operator: corev1.TolerationOpExists,
